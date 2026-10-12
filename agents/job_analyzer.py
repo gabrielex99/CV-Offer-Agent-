@@ -29,8 +29,8 @@ def analyze_job_description(jd_text: str, model: Optional[str] = None) -> JobAna
     # Se non ci sono chiavi API configurate, forniamo un'analisi euristica per test immediati
     has_api_key = any(
         os.getenv(k) for k in [
-            "OPENAI_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY", 
-            "AZURE_API_KEY", "GROQ_API_KEY"
+            "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", 
+            "ANTHROPIC_API_KEY", "AZURE_API_KEY", "GROQ_API_KEY"
         ]
     )
     
@@ -47,6 +47,7 @@ def analyze_job_description(jd_text: str, model: Optional[str] = None) -> JobAna
             model=model_name,
             messages=messages,
             temperature=0.2,
+            max_tokens=1000,
             response_format={"type": "json_object"} if "gpt" in model_name else None
         )
         content = response.choices[0].message.content.strip()
@@ -60,7 +61,11 @@ def analyze_job_description(jd_text: str, model: Optional[str] = None) -> JobAna
         data = json.loads(content)
         return JobAnalysis(**data)
     except Exception as e:
-        print(f"[Warning] Chiamata LLM fallita ({e}). Utilizzo fallback euristico.")
+        err_str = str(e)
+        if "402" in err_str or "credits" in err_str:
+            print(f"[Warning] Crediti OpenRouter insufficienti per completamento esteso ({e}). Ricarica su openrouter.ai/settings/credits o usa un modello gratuito. Utilizzo fallback euristico.")
+        else:
+            print(f"[Warning] Chiamata LLM fallita ({e}). Utilizzo fallback euristico.")
         return _fallback_job_analysis(jd_text)
 
 

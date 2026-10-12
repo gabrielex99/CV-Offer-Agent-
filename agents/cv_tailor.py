@@ -48,8 +48,8 @@ def tailor_cv(cv_text: str, job_analysis: JobAnalysis, model: Optional[str] = No
     
     has_api_key = any(
         os.getenv(k) for k in [
-            "OPENAI_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY", 
-            "AZURE_API_KEY", "GROQ_API_KEY"
+            "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", 
+            "ANTHROPIC_API_KEY", "AZURE_API_KEY", "GROQ_API_KEY"
         ]
     )
     
@@ -79,6 +79,7 @@ Genera l'ottimizzazione del CV garantendo il massimo match ATS e la mappa di sos
             model=model_name,
             messages=messages,
             temperature=0.3,
+            max_tokens=1200,
             response_format={"type": "json_object"} if "gpt" in model_name else None
         )
         content = response.choices[0].message.content.strip()
@@ -91,7 +92,11 @@ Genera l'ottimizzazione del CV garantendo il massimo match ATS e la mappa di sos
         data = json.loads(content)
         return TailoredCVData(**data)
     except Exception as e:
-        print(f"[Warning] Chiamata LLM CV Tailor fallita ({e}). Utilizzo fallback euristico.")
+        err_str = str(e)
+        if "402" in err_str or "credits" in err_str:
+            print(f"[Warning] Crediti OpenRouter insufficienti per completamento esteso ({e}). Ricarica su openrouter.ai/settings/credits o usa un modello gratuito. Utilizzo fallback euristico.")
+        else:
+            print(f"[Warning] Chiamata LLM CV Tailor fallita ({e}). Utilizzo fallback euristico.")
         return _fallback_cv_tailoring(cv_text, job_analysis)
 
 

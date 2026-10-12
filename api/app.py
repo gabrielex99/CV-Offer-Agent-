@@ -56,8 +56,8 @@ class GenerateRequest(BaseModel):
 def get_status():
     has_api_key = any(
         os.getenv(k) for k in [
-            "OPENAI_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY", 
-            "AZURE_API_KEY", "GROQ_API_KEY"
+            "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", 
+            "ANTHROPIC_API_KEY", "AZURE_API_KEY", "GROQ_API_KEY"
         ]
     )
     master_cv_exists = os.path.isfile(os.path.join(UPLOAD_DIR, "master_cv.docx"))
