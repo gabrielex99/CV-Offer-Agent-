@@ -42,6 +42,7 @@ class TailorRequest(BaseModel):
     cv_text: str
     job_analysis: JobAnalysis
     model: Optional[str] = None
+    github_username: Optional[str] = None
 
 
 class GenerateRequest(BaseModel):
@@ -50,6 +51,7 @@ class GenerateRequest(BaseModel):
     mode: str = "inplace"
     export_pdf: bool = False
     context: Optional[Dict[str, Any]] = None
+    github_projects: Optional[List[Any]] = None
 
 
 @app.get("/api/status")
@@ -118,8 +120,20 @@ def analyze_jd(req: AnalyzeJDRequest):
 
 @app.post("/api/tailor", response_model=TailoredCVData)
 def run_tailor(req: TailorRequest):
-    result = tailor_cv(req.cv_text, req.job_analysis, model=req.model)
+    result = tailor_cv(
+        cv_text=req.cv_text, 
+        job_analysis=req.job_analysis, 
+        model=req.model,
+        github_username=req.github_username
+    )
     return result
+
+
+@app.get("/api/github-repos/{username}")
+def get_github_repos(username: str):
+    from utils.github_scanner import fetch_user_github_projects
+    repos = fetch_user_github_projects(username)
+    return {"username": username, "repos": repos}
 
 
 @app.post("/api/generate-docx")
@@ -133,7 +147,12 @@ def generate_docx(req: GenerateRequest):
     dest_path = os.path.join(OUTPUT_DIR, base_name)
 
     if req.mode == "inplace":
-        count = apply_inplace_replacements(src_path, dest_path, req.replacements)
+        count = apply_inplace_replacements(
+            input_docx_path=src_path, 
+            output_docx_path=dest_path, 
+            replacements=req.replacements,
+            github_projects=req.github_projects
+        )
     elif req.mode == "jinja":
         render_jinja_template(src_path, dest_path, req.context or {})
     else:

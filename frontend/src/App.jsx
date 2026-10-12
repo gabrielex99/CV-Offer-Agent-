@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Upload, FileText, Sparkles, CheckCircle2, AlertCircle, 
-  ArrowRight, Download, RefreshCw, FileCheck, Layers, Cpu, ShieldCheck
+  ArrowRight, Download, RefreshCw, FileCheck, Layers, Cpu, ShieldCheck,
+  Github, Code2, ExternalLink
 } from 'lucide-react';
 
 export default function App() {
@@ -10,6 +11,8 @@ export default function App() {
   const [cvInfo, setCvInfo] = useState(null);
   const [jdText, setJdText] = useState('');
   const [isUploadingCv, setIsUploadingCv] = useState(false);
+  const [githubUsername, setGithubUsername] = useState('gabrielex99');
+  const [includeGithub, setIncludeGithub] = useState(true);
 
   // Stati di elaborazione agenti
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -78,16 +81,35 @@ export default function App() {
     }
   };
 
-  // Incolla JD di esempio
+  // Incolla JD di esempio (Leonardo NATO AGS)
   const handleLoadSampleJd = () => {
-    setJdText(`Titolo: Senior Cloud & Backend Engineer
-Azienda: FinTech Global Services
+    setJdText(`Titolo: Supporto Infrastruttura di Terra NATO AGS (Electronics Division)
+Azienda: Leonardo S.p.A.
+Sede: Catania / Base Militare di Sigonella
+
 Requisiti Chiave:
-- 4-5 anni di esperienza con Python (FastAPI, asyncio)
-- Forte esperienza con Docker, Kubernetes (EKS/GKE)
-- Database distribuiti: PostgreSQL e Redis caching
-- Pipeline CI/CD con GitHub Actions e Terraform
-- Metodologia Agile/Scrum e orientamento all'affidabilità mission-critical.`);
+- Configurazione e manutenzione reti informatiche complesse (Networking & Sicurezza Cisco).
+- Amministrazione dei sistemi operativi Windows e Linux.
+- Conoscenza di LDAP, PostgreSQL, VMware, Docker e Zabbix (o Grafana).
+- Sviluppo script in Python, Bash, Go per automazione processi operativi.
+- Idoneità Nulla Osta di Segretezza (NOS).
+- Buona conoscenza lingua inglese (B2).`);
+  };
+
+  // Incolla JD di esempio (AI Engineer)
+  const handleLoadAiEngineerJd = () => {
+    setJdText(`Titolo: Senior AI Engineer / LLM Specialist
+Azienda: TechGenius Labs (Milano / Remote)
+
+Chi cerchiamo:
+Un Senior AI Engineer per guidare lo sviluppo di piattaforme GenAI e sistemi ad agenti autonomi.
+
+Requisiti Chiave & Hard Skills:
+- Comprovata esperienza con Python (FastAPI), PyTorch o framework moderni di intelligenza artificiale.
+- Progettazione di pipeline RAG avanzate con LangChain, LlamaIndex o LiteLLM e Vector Databases (Chroma DB, pgvector).
+- Esperienza con modelli multimodali, generazione video/audio, prompting avanzato e agenti cooperanti.
+- Esperienza con architetture containerizzate (Docker, Kubernetes) e automazione MLOps.
+- Familiarità con l'ingegnerizzazione di prodotti AI reali e progetti open source.`);
   };
 
   // Flusso agentico di analisi e tailoring
@@ -107,7 +129,7 @@ Requisiti Chiave:
 
     try {
       // Step 1: Job Analyzer Agent
-      setAnalysisStep('1/2: Job Analyzer Agent estrae keyword ATS e requisiti...');
+      setAnalysisStep('1/2: Job Analyzer Agent estrae requisiti e keyword ATS...');
       const jdRes = await fetch('/api/analyze-jd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -117,14 +139,15 @@ Requisiti Chiave:
       const jdData = await jdRes.json();
       setJobAnalysis(jdData);
 
-      // Step 2: CV Tailor Agent
-      setAnalysisStep('2/2: CV Tailor Agent ottimizza bullet point ed esperienze...');
+      // Step 2: CV Tailor Agent & GitHub Project Scanner
+      setAnalysisStep('2/2: CV Tailor & GitHub Agent scansionano i progetti ed ottimizzano il CV...');
       const tailorRes = await fetch('/api/tailor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cv_text: cvInfo.full_text,
           job_analysis: jdData,
+          github_username: includeGithub && githubUsername.trim() ? githubUsername.trim() : null
         }),
       });
       if (!tailorRes.ok) throw new Error("Errore durante l'ottimizzazione del CV");
@@ -154,6 +177,7 @@ Requisiti Chiave:
           replacements: tailoredData.replacements_map || {},
           mode: 'inplace',
           export_pdf: exportPdf,
+          github_projects: tailoredData.github_projects || []
         }),
       });
       if (!res.ok) throw new Error('Errore durante la compilazione del documento');
@@ -185,7 +209,7 @@ Requisiti Chiave:
                   </span>
                 </h1>
                 <p className="text-sm text-slate-400">
-                  Adatta il tuo CV a qualunque offerta con agenti AI, mantenendo grafica, font e tabelle perfettamente intatti.
+                  Adatta il tuo CV a ruoli specifici (es. AI Engineer, Sistemi, Cloud) preservando font e grafica al 100% ed integrando i tuoi progetti GitHub reali.
                 </p>
               </div>
             </div>
@@ -215,6 +239,49 @@ Requisiti Chiave:
             <span>{errorMsg}</span>
           </div>
         )}
+
+        {/* BARRA INTEGRAZIONE GITHUB SCANNER */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-800 text-indigo-400 rounded-xl">
+              <Github className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white flex items-center gap-2">
+                GitHub AI Projects Scanner
+                <span className="text-[10px] uppercase font-bold bg-indigo-900/60 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-700/40">
+                  Nuova Funzionalità
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Estrae i tuoi progetti (es. AI, LLM, Agenti) e li inserisce nel CV come esperienze pratiche.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 w-full md:w-auto">
+              <span className="text-xs text-slate-500 font-mono">github.com/</span>
+              <input
+                type="text"
+                value={githubUsername}
+                onChange={(e) => setGithubUsername(e.target.value)}
+                placeholder="username"
+                className="bg-transparent text-xs text-indigo-300 font-mono focus:outline-none w-28"
+              />
+            </div>
+
+            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={includeGithub}
+                onChange={(e) => setIncludeGithub(e.target.checked)}
+                className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-700"
+              />
+              <span className="whitespace-nowrap">Attiva Scansione</span>
+            </label>
+          </div>
+        </div>
 
         {/* GRIGLIA PRINCIPALE A 2 COLONNE: CV (A SINISTRA) | OFFERTA (A DESTRA) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -287,7 +354,7 @@ Requisiti Chiave:
             <div className="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-slate-500" />
-                Compatibile con tabelle a 2 colonne, colonne multiple ed icone
+                Mantiene 100% stili, colori, font e interlinee
               </span>
             </div>
           </div>
@@ -302,18 +369,26 @@ Requisiti Chiave:
                   </div>
                   <h2 className="text-lg font-semibold text-white">2. Job Description</h2>
                 </div>
-                <button
-                  onClick={handleLoadSampleJd}
-                  className="text-xs text-purple-400 hover:text-purple-300 font-medium"
-                >
-                  Incolla Esempio
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleLoadAiEngineerJd}
+                    className="text-xs bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-800/60 transition"
+                  >
+                    💡 Esempio AI Engineer
+                  </button>
+                  <button
+                    onClick={handleLoadSampleJd}
+                    className="text-xs text-purple-400 hover:text-purple-300 font-medium"
+                  >
+                    Esempio Sistemi/NATO
+                  </button>
+                </div>
               </div>
 
               <textarea
                 value={jdText}
                 onChange={(e) => setJdText(e.target.value)}
-                placeholder="Incolla qui il testo dell'offerta di lavoro (o link URL dell'annuncio)..."
+                placeholder="Incolla qui il testo dell'offerta (es. Posizione AI Engineer, Machine Learning, Sistemi)..."
                 rows={10}
                 className="w-full bg-slate-950/60 border border-slate-800 focus:border-purple-500 rounded-xl p-4 text-sm text-slate-200 placeholder-slate-600 focus:outline-none transition resize-none"
               />
@@ -363,7 +438,7 @@ Requisiti Chiave:
                   Miglioramenti Proposti dall'Agent per questa Offerta
                 </h3>
                 <p className="text-sm text-slate-400 mt-1">
-                  Ecco come l'agent ha ottimizzato il tuo CV per massimizzare il punteggio ATS senza inventare qualifiche.
+                  Ecco come l'agent ha ottimizzato il tuo CV per massimizzare il punteggio ATS ed evidenziare i tuoi progetti GitHub reali.
                 </p>
               </div>
 
@@ -423,11 +498,71 @@ Requisiti Chiave:
               </p>
             </div>
 
+            {/* SEZIONE PROGETTI GITHUB SELEZIONATI (NUOVA FEATURE!) */}
+            {tailoredData.github_projects && tailoredData.github_projects.length > 0 && (
+              <div className="bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900 border border-indigo-800/60 rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-indigo-300 flex items-center gap-2">
+                    <Code2 className="w-4 h-4 text-indigo-400" />
+                    Progetti GitHub Integrati nel CV come Esperienze Pratiche
+                  </h4>
+                  <span className="text-xs px-2 py-0.5 bg-indigo-900/60 text-indigo-300 rounded border border-indigo-700/50">
+                    {tailoredData.github_projects.length} Progetti Selezionati
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {tailoredData.github_projects.map((proj, pi) => (
+                    <div key={pi} className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-semibold text-white text-xs">
+                          {proj.project_title}
+                        </div>
+                        {proj.github_url && (
+                          <a
+                            href={proj.github_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-slate-500 hover:text-indigo-400 shrink-0"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-1">
+                        {proj.tech_stack && proj.tech_stack.map((t, ti) => (
+                          <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+
+                      <ul className="space-y-1 text-xs text-slate-300 pt-1">
+                        {proj.bullets && proj.bullets.map((b, bi) => (
+                          <li key={bi} className="flex items-start gap-1.5">
+                            <span className="text-indigo-400 font-bold">•</span>
+                            <span>{b}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {proj.relevance_reason && (
+                        <p className="text-[11px] text-indigo-300/80 italic border-t border-slate-800/80 pt-1.5 mt-2">
+                          🎯 Perché è rilevante: {proj.relevance_reason}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Esperienze e Bullet Points Ottimizzati */}
             {tailoredData.experiences && tailoredData.experiences.length > 0 && (
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-slate-200">
-                  Esperienze & Bullet Point Riformulati con Metriche e Azioni
+                  Esperienze Lavorative Riformulate con Metriche e Focus Tecnico
                 </h4>
                 <div className="space-y-3">
                   {tailoredData.experiences.map((exp, i) => (
@@ -507,7 +642,7 @@ Requisiti Chiave:
                   <div>
                     <h4 className="font-bold text-white text-base">Il tuo CV Adattato è Pronto!</h4>
                     <p className="text-xs text-emerald-300/80">
-                      Layout grafico, tabelle, font e colori originali mantenuti intatti al 100%.
+                      Layout grafico, tabelle, font e colori originali mantenuti intatti al 100%. Progetti GitHub integrati.
                     </p>
                   </div>
                 </div>

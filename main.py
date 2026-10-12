@@ -26,7 +26,8 @@ def run_pipeline(
     mode: str = "inplace",
     export_pdf: bool = False,
     output_path: str = None,
-    model: str = None
+    model: str = None,
+    github_username: str = None
 ):
     console.print(Panel.fit("[bold cyan]CV OFFER AGENT[/bold cyan] - Tailoring Intelligente del CV", border_style="cyan"))
     
@@ -58,9 +59,24 @@ def run_pipeline(
     with console.status("[bold magenta]Estrazione contenuti dal Master CV...[/bold magenta]"):
         cv_data = extract_docx_content(cv_path)
 
-    # 5. CV Tailor Agent
-    with console.status("[bold yellow]CV Tailor Agent: ottimizzazione sezioni e bullet point...[/bold yellow]"):
-        tailored_cv = tailor_cv(cv_data["full_text"], job_analysis, model=model)
+    # 5. CV Tailor Agent (con eventuale scansione GitHub per ruoli AI/Tech)
+    with console.status("[bold yellow]CV Tailor Agent: analisi progetti GitHub & ottimizzazione...[/bold yellow]"):
+        tailored_cv = tailor_cv(
+            cv_text=cv_data["full_text"], 
+            job_analysis=job_analysis, 
+            model=model,
+            github_username=github_username
+        )
+
+    # Mostra progetti GitHub selezionati se presenti
+    if tailored_cv.github_projects:
+        table_gh = Table(title="🤖 Progetti GitHub Selezionati & Integrati nel CV")
+        table_gh.add_column("Progetto", style="cyan", no_wrap=True)
+        table_gh.add_column("Stack & Ruolo", style="green")
+        table_gh.add_column("Perché Rilevante", style="white")
+        for p in tailored_cv.github_projects:
+            table_gh.add_row(p.project_title[:35], ", ".join(p.tech_stack[:4]), p.relevance_reason[:80])
+        console.print(table_gh)
 
     console.print(Panel(
         f"[bold]Match Score ATS Stimato:[/bold] [green]{tailored_cv.match_score_estimate}%[/green]\n\n"
@@ -80,10 +96,14 @@ def run_pipeline(
     # 7. Rendering fedele al 100%
     with console.status(f"[bold cyan]Rendering documento ({mode})...[/bold cyan]"):
         if mode == "inplace":
-            # Applica le sostituzioni conservando font e stili Word
+            # Applica le sostituzioni e inserisce la sezione progetti GitHub se presenti
             replacements = dict(tailored_cv.replacements_map)
-            # Aggiungi eventuale rimpiazzo per summary
-            count = apply_inplace_replacements(cv_path, output_path, replacements)
+            count = apply_inplace_replacements(
+                input_docx_path=cv_path, 
+                output_docx_path=output_path, 
+                replacements=replacements,
+                github_projects=tailored_cv.github_projects
+            )
             console.print(f"🎯 [bold green]In-place Replacement completato:[/bold green] {count} blocchi sostituiti con stili preservati.")
         elif mode == "jinja":
             context = {
@@ -120,6 +140,7 @@ def main():
     parser.add_argument("--pdf", action="store_true", help="Esporta anche in formato PDF")
     parser.add_argument("--output", type=str, help="Percorso del file DOCX generato")
     parser.add_argument("--model", type=str, help="Modello LLM (es. gpt-4o, gemini/gemini-1.5-pro)")
+    parser.add_argument("--github", type=str, default="gabrielex99", help="Username GitHub per estrarre e integrare progetti AI/Tech")
     parser.add_argument("--ui", action="store_true", help="Avvia l'interfaccia grafica Web")
 
     args = parser.parse_args()
@@ -142,7 +163,8 @@ def main():
         mode=args.mode,
         export_pdf=args.pdf,
         output_path=args.output,
-        model=args.model
+        model=args.model,
+        github_username=args.github
     )
 
 if __name__ == "__main__":

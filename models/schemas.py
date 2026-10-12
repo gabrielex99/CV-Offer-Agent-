@@ -23,6 +23,16 @@ class ExperienceOptimization(BaseModel):
     rationale: str = Field(..., description="Spiegazione di perché sono state apportate queste modifiche")
 
 
+class GitHubProjectOptimization(BaseModel):
+    """Progetto GitHub estratto e ottimizzato come esperienza/progetto per il CV."""
+    repo_name: str = Field(..., description="Nome del repository GitHub")
+    project_title: str = Field(..., description="Titolo professionale del progetto per il CV")
+    tech_stack: List[str] = Field(default_factory=list, description="Tecnologie, librerie e modelli usati (es. Python, LangChain, RAG)")
+    bullets: List[str] = Field(default_factory=list, description="Bullet point d'impatto focalizzati sul ruolo target (es. AI Engineer)")
+    relevance_reason: str = Field(..., description="Perché questo progetto è altamente rilevante per la posizione richiesta")
+    github_url: Optional[str] = Field(None, description="Link al repository GitHub")
+
+
 class TailoredCVData(BaseModel):
     """Dati del CV riadattati dal CV Tailor Agent."""
     tailored_summary: str = Field(
@@ -36,6 +46,10 @@ class TailoredCVData(BaseModel):
     experiences: List[ExperienceOptimization] = Field(
         default_factory=list, 
         description="Lista delle esperienze lavorative con bullet point ottimizzati"
+    )
+    github_projects: List[GitHubProjectOptimization] = Field(
+        default_factory=list,
+        description="Progetti GitHub selezionati e formattati come esperienze di rilievo per il ruolo (es. AI Engineer)"
     )
     replacements_map: Dict[str, str] = Field(
         default_factory=dict,

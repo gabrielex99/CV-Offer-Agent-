@@ -65,19 +65,73 @@ def replace_in_paragraph(paragraph, target: str, replacement: str) -> bool:
     return True
 
 
+def insert_github_projects(doc, github_projects: List[Any]) -> bool:
+    """
+    Inserisce una sezione dedicata ai Progetti GitHub nel documento DOCX,
+    preservando lo stile Heading 1 e List Paragraph per integrarsi al 100% con il layout.
+    """
+    if not github_projects:
+        return False
+
+    # Cerca il punto di ancoraggio (es. prima di "Istruzione" o "Certificazioni")
+    anchor_paragraph = None
+    heading_style = "Heading 1"
+    
+    for p in doc.paragraphs:
+        txt = p.text.strip().lower()
+        if txt in ["istruzione", "education", "formazione", "certificazioni", "certifications"]:
+            anchor_paragraph = p
+            if p.style:
+                heading_style = p.style.name
+            break
+
+    if not anchor_paragraph and doc.paragraphs:
+        anchor_paragraph = doc.paragraphs[-1]
+
+    if not anchor_paragraph:
+        return False
+
+    # Inserisce l'intestazione di sezione
+    h = anchor_paragraph.insert_paragraph_before("Progetti AI & Soluzioni Open Source (GitHub)", style=heading_style)
+    
+    # Inserisce ciascun progetto con titolo in grassetto e relative bullet
+    for proj in github_projects:
+        # Supporta sia Pydantic model che dict
+        title = getattr(proj, "project_title", None) or proj.get("project_title") or getattr(proj, "repo_name", "")
+        bullets = getattr(proj, "bullets", None) or proj.get("bullets", [])
+        
+        # Paragrafo Titolo Progetto
+        p_title = anchor_paragraph.insert_paragraph_before(style="Normal")
+        r_title = p_title.add_run(title)
+        r_title.bold = True
+        
+        # Bullet points
+        for b in bullets:
+            p_b = anchor_paragraph.insert_paragraph_before(style="List Paragraph")
+            r_b = p_b.add_run(f"• {b}")
+
+    return True
+
+
 def apply_inplace_replacements(
     input_docx_path: str,
     output_docx_path: str,
-    replacements: Dict[str, str]
+    replacements: Dict[str, str],
+    github_projects: Optional[List[Any]] = None
 ) -> int:
     """
     Itera su tutti i paragrafi di corpo, tabelle (e relative celle), header e footer,
-    applicando il dizionario delle sostituzioni senza alterare la struttura del layout.
+    applicando il dizionario delle sostituzioni ed eventuale inserimento progetti GitHub
+    senza alterare la struttura del layout.
     
     Ritorna il numero di sostituzioni effettuate con successo.
     """
     doc = docx.Document(input_docx_path)
     count = 0
+
+    # Inserimento progetti GitHub se forniti
+    if github_projects:
+        insert_github_projects(doc, github_projects)
 
     # 1. Paragrafi principali del documento
     for p in doc.paragraphs:

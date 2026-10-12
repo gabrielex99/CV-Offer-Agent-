@@ -45,11 +45,36 @@ Devi restituire ESCLUSIVAMENTE un JSON valido (senza markdown extra, senza ```js
 }
 """
 
-def tailor_cv(cv_text: str, job_analysis: JobAnalysis, model: Optional[str] = None) -> TailoredCVData:
+from utils.github_scanner import fetch_user_github_projects
+from agents.github_agent import analyze_and_select_github_projects
+
+def tailor_cv(
+    cv_text: str, 
+    job_analysis: JobAnalysis, 
+    model: Optional[str] = None,
+    github_username: Optional[str] = None
+) -> TailoredCVData:
     """
-    CV Tailor Agent: Riformula e ottimizza i contenuti del CV allineandoli alla JD.
+    CV Tailor Agent: Riformula e ottimizza i contenuti del CV allineandoli alla JD,
+    con supporto all'analisi e inclusione di progetti reali da GitHub per ruoli AI Engineer.
     """
     model_name = model or os.getenv("LLM_MODEL", "gpt-4o")
+    
+    # Se specificato username GitHub o presente nel CV, recupera i progetti
+    gh_user = github_username
+    if not gh_user:
+        if "gabriele46001999" in cv_text:
+            gh_user = "gabrielex99"  # Username attivo con i progetti AI
+        elif "github.com/" in cv_text:
+            try:
+                gh_user = cv_text.split("github.com/")[1].split()[0].split("/")[0].strip()
+            except Exception:
+                gh_user = "gabrielex99"
+
+    repos = fetch_user_github_projects(gh_user) if gh_user else []
+    selected_gh_projects = []
+    if repos:
+        selected_gh_projects = analyze_and_select_github_projects(repos, job_analysis, model=model_name)
     
     has_api_key = any(
         os.getenv(k) for k in [
@@ -59,7 +84,7 @@ def tailor_cv(cv_text: str, job_analysis: JobAnalysis, model: Optional[str] = No
     )
     
     if not has_api_key and not model_name.startswith("ollama/"):
-        return _fallback_cv_tailoring(cv_text, job_analysis)
+        return _fallback_cv_tailoring(cv_text, job_analysis, selected_gh_projects)
 
     user_prompt = f"""ANALISI DELLA JOB DESCRIPTION:
 Ruolo: {job_analysis.role_title}
@@ -102,19 +127,102 @@ Genera l'ottimizzazione del CV garantendo il massimo match ATS e la mappa di sos
             print(f"[Warning] Crediti OpenRouter insufficienti per completamento esteso ({e}). Ricarica su openrouter.ai/settings/credits o usa un modello gratuito. Utilizzo fallback euristico.")
         else:
             print(f"[Warning] Chiamata LLM CV Tailor fallita ({e}). Utilizzo fallback euristico.")
-        return _fallback_cv_tailoring(cv_text, job_analysis)
+        return _fallback_cv_tailoring(cv_text, job_analysis, selected_gh_projects)
 
 
-def _fallback_cv_tailoring(cv_text: str, job_analysis: JobAnalysis) -> TailoredCVData:
+def _fallback_cv_tailoring(
+    cv_text: str, 
+    job_analysis: JobAnalysis,
+    github_projects: Optional[List[Any]] = None
+) -> TailoredCVData:
     """Fallback euristico intelligente per generare sostituzioni ad altissima precisione."""
+    target_str = (job_analysis.role_title + " " + " ".join(job_analysis.hard_skills) + " " + job_analysis.summary).lower()
+    
     is_defense_systems = any(
-        kw in (job_analysis.role_title + " " + " ".join(job_analysis.hard_skills) + " " + job_analysis.summary).lower()
+        kw in target_str
         for kw in ["nato", "leonardo", "sigonella", "sistemi", "networking", "cisco", "infrastruttura", "windows", "linux", "zabbix", "vmware"]
+    )
+    is_ai_role = any(
+        kw in target_str
+        for kw in ["ai engineer", "artificial intelligence", "machine learning", "llm", "genai", "deep learning", "nlp", "rag", "agent", "prompt"]
     )
     
     replacements: Dict[str, str] = {}
     
-    # 1. Caso specifico: CV Gabriele Leotta per posizioni Sistemistiche / Difesa (Leonardo NATO AGS)
+    # 1. Caso specifico: CV Gabriele Leotta per posizioni AI Engineer (con integrazione progetti GitHub)
+    if "gabriele leotta" in cv_text.lower() and is_ai_role:
+        title_orig = "SENIOR FULL STACK SOFTWARE ENGINEER | .NET · LARAVEL · ANGULAR · MICROSERVIZI · CLOUD-NATIVE"
+        title_new = "SENIOR AI ENGINEER | LLM · MULTI-AGENT WORKFLOWS · RAG · PYTHON/FASTAPI · CLOUD-NATIVE"
+        replacements[title_orig] = title_new
+        
+        sum_orig = (
+            "Senior Full Stack Software Engineer con oltre 5 anni di esperienza nella progettazione e nel rilascio di piattaforme enterprise "
+            "e architetture a microservizi (.NET 9/C#, Laravel, Python/FastAPI, Angular 18, React/Next.js) in ambito healthcare, agrifood e IoT cloud-edge. "
+            "Esperienza end-to-end su API design, sicurezza (OAuth 2.0/OIDC, Keycloak SSO, SPID), orchestrazione Kubernetes multi-cluster e "
+            "integrazione di soluzioni AI/ML (RAG, LLM, modelli predittivi) in applicazioni reali. Guida delle scelte tecniche, code review e "
+            "onboarding in un team di 5 sviluppatori. Orientato ad affidabilità, scalabilità e valore di business."
+        )
+        sum_new = (
+            "Senior AI Engineer con oltre 5 anni di esperienza nello sviluppo software avanzato e nella progettazione di architetture GenAI "
+            "e sistemi multi-agente scalabili in produzione. Comprovata esperienza nell'integrazione di LLM (Mistral, OpenAI, Anthropic), orchestrazione "
+            "agentica (LiteLLM, Semantic Kernel), pipeline RAG avanzate (LangChain, Chroma DB), modelli sintetici (CTGAN) e modelli predittivi "
+            "(Random Forest, Scikit-learn). Esperienza consolidata nello sviluppo di microservizi backend ad alte prestazioni in Python (FastAPI/Flask) "
+            "containerizzati su Docker e Kubernetes, con forte orientamento alla robustezza del codice e alla creazione di valore di business."
+        )
+        replacements[sum_orig] = sum_new
+        
+        # Competenze Tecniche valorizzate per AI
+        replacements["Backend: C# / .NET 9, PHP 8.1 / Laravel 10, Python (FastAPI, Flask), RESTful API, Microservizi, API Gateway"] = (
+            "AI, GenAI & Agenti: RAG Pipelines, Multi-Agent Orchestration, LangChain, Semantic Kernel, Vector Databases (Chroma DB), Prompt Engineering, Fine-tuning, CTGAN, Random Forest, Scikit-learn"
+        )
+        replacements["Frontend: Angular (15, 18), TypeScript, JavaScript (ES6+), React / Next.js, HTML5, CSS3, Angular Material, Chart.js"] = (
+            "Backend & Microservizi AI: Python (FastAPI, Flask, asyncio), C# / .NET 9, PHP 8.1 / Laravel 10, RESTful API, Microservices, API Gateway"
+        )
+        replacements["Cloud & DevOps: Docker, Kubernetes (multi-cluster, Liqo), MinIO (S3-compatible), Git (GitLab, GitHub), CI/CD (GitLab CI, GitHub Actions)"] = (
+            "Cloud & MLOps: Docker, Kubernetes (multi-cluster, Liqo), MinIO (S3-compatible Object Storage), Git (GitLab, GitHub), CI/CD (GitLab CI, GitHub Actions)"
+        )
+        replacements["Database: PostgreSQL, MySQL, MongoDB, Oracle, Chroma DB (vector DB), PL/SQL"] = (
+            "Database & Vettoriali: Chroma DB (vector store), PostgreSQL (pgvector), MySQL, MongoDB, Oracle, PL/SQL"
+        )
+        replacements["IoT & Monitoring: ThingsBoard, Grafana (dashboard e alerting)"] = (
+            "AI Interfaces & Monitoring: React / Next.js, Angular (15, 18), TypeScript, Grafana (dashboard e telemetria latenza LLM), ThingsBoard"
+        )
+        
+        return TailoredCVData(
+            tailored_summary=sum_new,
+            highlighted_skills=[
+                "Multi-Agent AI Systems", "RAG (Retrieval-Augmented Generation)", "LangChain & LiteLLM", 
+                "Python & FastAPI", "Chroma DB & Vector Search", "LLM Integration (Mistral/OpenAI)", 
+                "Docker & Kubernetes", "CTGAN & Random Forest"
+            ],
+            experiences=[
+                ExperienceOptimization(
+                    original_company_or_role="CiTrace – Tracciabilità Agrifood con AI Assistant",
+                    optimized_bullets=[
+                        "Realizzato 'CiTrace AI Agent' (Python/Flask) con pipeline RAG (LangChain, Chroma DB, Mistral AI) e intent detection per interrogazioni in linguaggio naturale.",
+                        "Messo in sicurezza le API e i dati vettoriali con Keycloak SSO (OAuth 2.0 / OIDC) e storage distribuito MinIO."
+                    ],
+                    rationale="Massima evidenza sulle competenze RAG, agenti e integrazione di LLM open-source."
+                ),
+                ExperienceOptimization(
+                    original_company_or_role="Agrilog – Cloud-Edge & Machine Learning",
+                    optimized_bullets=[
+                        "Generati dataset storici sintetici (equivalenti a 10 anni di misurazioni) con CTGAN per training dati complessi.",
+                        "Addestrati e rilasciati in produzione modelli predittivi Random Forest per stima e ottimizzazione consumi idrici."
+                    ],
+                    rationale="Dimostra padronanza in generative modeling tabellare e machine learning applicato."
+                )
+            ],
+            github_projects=github_projects or [],
+            replacements_map=replacements,
+            match_score_estimate=96,
+            advice_notes=[
+                "Mostrare al colloquio tecnico i progetti GitHub ad agenti (es. CV Offer Agent e Faceless Video Suite) per dimostrare padronanza reale di LLM orchestration.",
+                "Sottolineare la capacità di combinare competenze AI con solida ingegneria software enterprise (CI/CD, Kubernetes, API Design)."
+            ]
+        )
+
+    # 2. Caso specifico: CV Gabriele Leotta per posizioni Sistemistiche / Difesa (Leonardo NATO AGS)
     if "gabriele leotta" in cv_text.lower() and is_defense_systems:
         title_orig = "SENIOR FULL STACK SOFTWARE ENGINEER | .NET · LARAVEL · ANGULAR · MICROSERVIZI · CLOUD-NATIVE"
         title_new = "SYSTEM & INFRASTRUCTURE ENGINEER | NETWORKING (CCNA) · LINUX/WINDOWS · DOCKER · AUTOMATION"
@@ -199,6 +307,7 @@ def _fallback_cv_tailoring(cv_text: str, job_analysis: JobAnalysis) -> TailoredC
                     rationale="Allineamento con la gestione LDAP/SSO e gli standard di sicurezza richiesti da Leonardo."
                 )
             ],
+            github_projects=github_projects or [],
             replacements_map=replacements,
             match_score_estimate=94,
             advice_notes=[

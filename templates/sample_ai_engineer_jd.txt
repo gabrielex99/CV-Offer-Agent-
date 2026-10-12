@@ -1,0 +1,13 @@
+Titolo: Senior AI Engineer / LLM Specialist
+Azienda: TechGenius Labs (Milano / Remote)
+
+Chi cerchiamo:
+Un Senior AI Engineer con solida esperienza nello sviluppo software per guidare la progettazione di architetture GenAI, pipeline RAG e sistemi multi-agente in produzione.
+
+Requisiti Chiave & Hard Skills:
+- Comprovata esperienza con Python (FastAPI, asyncio) e librerie moderne di machine learning.
+- Progettazione di pipeline RAG avanzate con LangChain / LlamaIndex e Vector Databases (Chroma DB, pgvector).
+- Esperienza nello sviluppo di agenti autonomi cooperanti e sistemi multimodali (generazione video/audio, prompting avanzato).
+- Architetture a microservizi containerizzate su Docker e Kubernetes.
+- Orientamento alla robustezza del codice, testing e automazione.
+- Passione per la contribuzione a progetti open source.
