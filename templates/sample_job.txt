@@ -1,0 +1,22 @@
+Titolo: Senior Cloud & Backend Engineer
+Azienda: FinTech Global Services
+Sede: Milano (Ibrido / Full Remote)
+
+Chi cerchiamo:
+Siamo alla ricerca di un Senior Backend Engineer per accelerare l'evoluzione della nostra architettura cloud su larga scala.
+Lavorerai a stretto contatto con il team infrastrutturale e i product manager per sviluppare servizi ad altissima affidabilità e bassissima latenza.
+
+Requisiti Chiave & Hard Skills:
+- Almeno 4-5 anni di esperienza con Python (FastAPI, asyncio) o Go.
+- Forte esperienza con architetture containerizzate: Docker, Kubernetes (EKS / GKE) e Helm.
+- Conoscenza approfondita di database distribuiti (PostgreSQL, Redis per caching e code pub/sub).
+- Esperienza consolidata nella definizione di pipeline CI/CD (GitHub Actions, Terraform).
+- Metodologia TDD, monitoraggio applicativo (Prometheus, Grafana) e architetture event-driven.
+
+Soft Skills & Mindset:
+- Ottime doti di problem-solving e attitudine al lavoro di squadra in contesti agili (Scrum/Kanban).
+- Passione per il codice pulito, scalabilità e standard di sicurezza finanziaria.
+
+Cosa offriamo:
+- Progetti ad alto impatto tecnologico.
+- Budget formazione e certificazioni AWS/GCP.

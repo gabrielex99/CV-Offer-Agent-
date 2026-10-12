@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Environment variables
+.env
+
+# Generated Output files
+output/*.docx
+output/*.pdf
+!output/.gitkeep
+
+# Frontend Node
+frontend/node_modules/
+frontend/.npm/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
