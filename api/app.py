@@ -15,6 +15,7 @@ from renderers.inplace_replacer import apply_inplace_replacements
 from renderers.jinja_replacer import render_jinja_template
 from renderers.pdf_exporter import convert_docx_to_pdf
 from models.schemas import JobAnalysis, TailoredCVData
+from agents.career_advisor import discover_career_opportunities
 
 app = FastAPI(title="CV Offer Agent API", version="1.0.0")
 
@@ -43,6 +44,13 @@ class TailorRequest(BaseModel):
     job_analysis: JobAnalysis
     model: Optional[str] = None
     github_username: Optional[str] = None
+
+
+class DiscoverRolesRequest(BaseModel):
+    cv_text: Optional[str] = None
+    cv_filename: Optional[str] = None
+    github_username: Optional[str] = "gabrielex99"
+    model: Optional[str] = None
 
 
 class GenerateRequest(BaseModel):
@@ -125,6 +133,30 @@ def run_tailor(req: TailorRequest):
         job_analysis=req.job_analysis, 
         model=req.model,
         github_username=req.github_username
+    )
+    return result
+
+
+@app.post("/api/discover-roles")
+def discover_roles(req: DiscoverRolesRequest):
+    cv_text = req.cv_text or ""
+    if not cv_text and req.cv_filename:
+        src_path = os.path.join(UPLOAD_DIR, req.cv_filename)
+        if os.path.isfile(src_path):
+            extracted = extract_docx_content(src_path)
+            cv_text = extracted.get("full_text", "")
+
+    if not cv_text:
+        # Fallback se non c'è testo cv: prova a caricare master_cv.docx
+        sample_path = os.path.join(UPLOAD_DIR, "master_cv.docx")
+        if os.path.isfile(sample_path):
+            extracted = extract_docx_content(sample_path)
+            cv_text = extracted.get("full_text", "")
+
+    result = discover_career_opportunities(
+        cv_text=cv_text,
+        github_username=req.github_username,
+        model=req.model
     )
     return result
 

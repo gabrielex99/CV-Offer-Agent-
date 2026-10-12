@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { 
   Upload, FileText, Sparkles, CheckCircle2, AlertCircle, 
   ArrowRight, Download, RefreshCw, FileCheck, Layers, Cpu, ShieldCheck,
-  Github, Code2, ExternalLink
+  Github, Code2, ExternalLink, Compass, Briefcase, Search, ArrowUpRight,
+  TrendingUp, Award, ChevronRight
 } from 'lucide-react';
 
 export default function App() {
-  // Stati di input
+  // Tab attiva: 'tailor' | 'discover'
+  const [activeTab, setActiveTab] = useState('tailor');
+
+  // Stati di input CV & JD
   const [cvFile, setCvFile] = useState(null);
   const [cvInfo, setCvInfo] = useState(null);
   const [jdText, setJdText] = useState('');
@@ -14,11 +18,16 @@ export default function App() {
   const [githubUsername, setGithubUsername] = useState('gabrielex99');
   const [includeGithub, setIncludeGithub] = useState(true);
 
-  // Stati di elaborazione agenti
+  // Stati di elaborazione agenti (Tailoring)
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStep, setAnalysisStep] = useState('');
   const [jobAnalysis, setJobAnalysis] = useState(null);
   const [tailoredData, setTailoredData] = useState(null);
+
+  // Stati Career Discovery
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [discoveryResult, setDiscoveryResult] = useState(null);
+  const [discoveryError, setDiscoveryError] = useState(null);
 
   // Stati generazione e download
   const [isGenerating, setIsGenerating] = useState(false);
@@ -190,6 +199,42 @@ Requisiti Chiave & Hard Skills:
     }
   };
 
+  // Flusso Career Discovery Agent (Scoperta Nuovi Ruoli)
+  const handleDiscoverRoles = async () => {
+    setIsDiscovering(true);
+    setDiscoveryError(null);
+
+    try {
+      const res = await fetch('/api/discover-roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cv_text: cvInfo ? cvInfo.full_text : '',
+          cv_filename: cvFile || 'master_cv.docx',
+          github_username: githubUsername.trim() || 'gabrielex99'
+        }),
+      });
+      if (!res.ok) throw new Error('Errore durante la ricerca dei ruoli ideali');
+      const data = await res.json();
+      setDiscoveryResult(data);
+    } catch (err) {
+      setDiscoveryError(err.message);
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
+
+  // Applica un ruolo scoperto direttamente al modulo di Tailoring
+  const handleApplyRoleOpportunity = (opp) => {
+    if (opp.sample_jd) {
+      setJdText(opp.sample_jd);
+    } else {
+      setJdText(`Titolo: ${opp.role_title}\nCategoria: ${opp.category}\nCompetenze Richieste: ${opp.top_skills.join(', ')}\n\nDescrizione del Ruolo:\nCerchiamo un profilo specializzato con forte background in ${opp.top_skills.slice(0, 3).join(', ')}.\n${opp.why_you_fit}`);
+    }
+    setActiveTab('tailor');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -232,6 +277,36 @@ Requisiti Chiave & Hard Skills:
           </div>
         </header>
 
+        {/* TAB NAVIGATION */}
+        <div className="flex items-center gap-3 border-b border-slate-800 pb-2">
+          <button
+            onClick={() => setActiveTab('tailor')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition ${
+              activeTab === 'tailor'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-semibold'
+                : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>🎯 Adatta CV a un'Offerta</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('discover')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition ${
+              activeTab === 'discover'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-600/20 font-semibold'
+                : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+            }`}
+          >
+            <Compass className="w-4 h-4 text-pink-400" />
+            <span>🧭 Scopri Ruoli & Opportunità Nascoste</span>
+            <span className="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full font-bold border border-amber-400/30">
+              Career Advisor
+            </span>
+          </button>
+        </div>
+
         {/* MESSAGGIO ERRORE */}
         {errorMsg && (
           <div className="p-4 bg-red-950/60 border border-red-800/80 rounded-xl text-red-200 text-sm flex items-center gap-3">
@@ -240,8 +315,13 @@ Requisiti Chiave & Hard Skills:
           </div>
         )}
 
-        {/* BARRA INTEGRAZIONE GITHUB SCANNER */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+        {/* ========================================================================= */}
+        {/* TAB 1: ADATTA CV A UN'OFFERTA (CORE TAILORING WORKFLOW) */}
+        {/* ========================================================================= */}
+        {activeTab === 'tailor' && (
+          <div className="space-y-6">
+            {/* BARRA INTEGRAZIONE GITHUB SCANNER */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-slate-800 text-indigo-400 rounded-xl">
               <Github className="w-5 h-5" />
@@ -670,6 +750,237 @@ Requisiti Chiave & Hard Skills:
                     </a>
                   )}
                 </div>
+              </div>
+            )}
+
+          </div>
+        )}
+
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 2: SCOPRI RUOLI & OPPORTUNITÀ NASCOSTE (CAREER ADVISOR AGENT) */}
+        {/* ========================================================================= */}
+        {activeTab === 'discover' && (
+          <div className="space-y-6">
+            
+            {/* HERO BANNER CAREER ADVISOR */}
+            <div className="bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-800/50 rounded-2xl p-6 md:p-8 shadow-2xl space-y-5">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/60 border border-purple-700/50 text-xs font-semibold text-purple-300">
+                    <Compass className="w-3.5 h-3.5" />
+                    Career Discovery & Role Advisor Agent
+                  </div>
+                  <h2 className="text-2xl font-black text-white">
+                    Scopri Nuove Opportunità Sbloccate dal tuo Profilo GitHub + CV
+                  </h2>
+                  <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
+                    Spesso abbiamo competenze pratiche su repository GitHub personali (es. <em>Agenti AI, LangChain, Kubernetes, Scraper</em>) che nel CV tradizionale passano inosservate. Questo Agent scova i lavori ideali in cui hai un <strong>fit altissimo</strong>.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleDiscoverRoles}
+                  disabled={isDiscovering}
+                  className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:opacity-95 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition transform active:scale-95 shrink-0"
+                >
+                  {isDiscovering ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      <span>Analisi Profilo & Progetti in corso...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Compass className="w-5 h-5" />
+                      <span>🔍 Scopri Ruoli Consigliati</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Parametri di analisi */}
+              <div className="pt-4 border-t border-slate-800/80 flex flex-wrap items-center gap-6 text-xs text-slate-400">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-indigo-400" />
+                  <span>CV Base:</span>
+                  <strong className="text-slate-200">
+                    {cvInfo ? cvInfo.original_name : 'master_cv.docx (Default)'}
+                  </strong>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Github className="w-4 h-4 text-indigo-400" />
+                  <span>GitHub:</span>
+                  <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded border border-slate-800">
+                    <span className="text-slate-500 font-mono">@</span>
+                    <input
+                      type="text"
+                      value={githubUsername}
+                      onChange={(e) => setGithubUsername(e.target.value)}
+                      className="bg-transparent text-indigo-300 font-mono focus:outline-none w-24 text-xs font-semibold"
+                    />
+                  </div>
+                </div>
+
+                <div className="text-slate-500">
+                  Tip: Clicca su <em>"Usa per Adattare il CV"</em> per caricare istantaneamente il ruolo nel generatore.
+                </div>
+              </div>
+            </div>
+
+            {/* ERRORE DISCOVERY */}
+            {discoveryError && (
+              <div className="p-4 bg-red-950/60 border border-red-800/80 rounded-xl text-red-200 text-sm flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+                <span>{discoveryError}</span>
+              </div>
+            )}
+
+            {/* RISULTATI DISCOVERY */}
+            {discoveryResult && (
+              <div className="space-y-6 animate-fade-in">
+
+                {/* SINTESI STRATEGICA DEL PROFILO */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                  <div className="flex items-center gap-2.5 text-base font-bold text-white">
+                    <Award className="w-5 h-5 text-amber-400" />
+                    <span>Sintesi Strategica del Candidato (Executive View)</span>
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed bg-slate-950 p-4 rounded-xl border border-slate-800/80">
+                    {discoveryResult.candidate_summary}
+                  </p>
+
+                  {/* Competenze Rilevate */}
+                  {discoveryResult.extracted_competencies && discoveryResult.extracted_competencies.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <div className="text-xs uppercase font-semibold text-slate-400 tracking-wider">
+                        Competenze Chiave Identificate dall'Unione CV + Progetti
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {discoveryResult.extracted_competencies.map((comp, ci) => (
+                          <span
+                            key={ci}
+                            className="text-xs px-3 py-1 bg-purple-950/50 text-purple-200 border border-purple-800/50 rounded-lg font-medium"
+                          >
+                            {comp}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* GRIGLIA OPPORTUNITÀ E RUOLI CONSIGLIATI */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-emerald-400" />
+                      Ruoli di Mercato Consigliati ({discoveryResult.opportunities.length})
+                    </h3>
+                    <span className="text-xs text-slate-400">
+                      Ordinati per Fit e Potenziale di Posizionamento
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {discoveryResult.opportunities.map((opp, oi) => (
+                      <div
+                        key={oi}
+                        className="bg-slate-900 border border-slate-800 hover:border-purple-600/60 rounded-2xl p-5 flex flex-col justify-between shadow-xl transition space-y-4 group"
+                      >
+                        <div className="space-y-3">
+                          {/* Header card: Categoria e Match Score */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                              {opp.category}
+                            </span>
+                            <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800/50 flex items-center gap-1">
+                              <span>{opp.match_score}%</span>
+                              <span className="text-[10px] text-emerald-500 font-normal">fit</span>
+                            </span>
+                          </div>
+
+                          {/* Titolo Ruolo */}
+                          <h4 className="text-base font-bold text-white group-hover:text-purple-300 transition">
+                            {opp.role_title}
+                          </h4>
+
+                          {/* Perché sei ideale */}
+                          <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
+                            {opp.why_you_fit}
+                          </p>
+
+                          {/* Sbloccato da GitHub */}
+                          {opp.unlocked_by_github && opp.unlocked_by_github.length > 0 && (
+                            <div className="space-y-1.5 pt-1">
+                              <div className="text-[11px] font-semibold text-indigo-400 flex items-center gap-1.5">
+                                <Code2 className="w-3.5 h-3.5" />
+                                <span>Sbloccato dai tuoi Progetti:</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {opp.unlocked_by_github.map((proj, pidx) => (
+                                  <span
+                                    key={pidx}
+                                    className="text-[11px] px-2 py-0.5 bg-indigo-950/70 text-indigo-300 border border-indigo-800/40 rounded font-mono"
+                                  >
+                                    {proj}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Top skills */}
+                          {opp.top_skills && opp.top_skills.length > 0 && (
+                            <div className="space-y-1 pt-1">
+                              <div className="text-[11px] text-slate-400 font-semibold">
+                                Competenze Chiave:
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {opp.top_skills.map((sk, ski) => (
+                                  <span
+                                    key={ski}
+                                    className="text-[10px] px-2 py-0.5 bg-slate-950 text-slate-300 rounded border border-slate-800"
+                                  >
+                                    {sk}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Azioni Card */}
+                        <div className="pt-3 border-t border-slate-800/80 space-y-2">
+                          <button
+                            onClick={() => handleApplyRoleOpportunity(opp)}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/20 transition"
+                          >
+                            <span>🎯 Usa questo Ruolo per Adattare il CV</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+
+                          {opp.search_query_suggested && (
+                            <a
+                              href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(opp.search_query_suggested)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-lg text-[11px] border border-slate-800 transition"
+                            >
+                              <Search className="w-3 h-3 text-blue-400" />
+                              <span>Cerca offerte su LinkedIn</span>
+                              <ExternalLink className="w-3 h-3 ml-0.5 text-slate-500" />
+                            </a>
+                          )}
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             )}
 

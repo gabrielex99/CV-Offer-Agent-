@@ -14,6 +14,7 @@ from utils.jd_fetcher import fetch_job_description
 from utils.docx_extractor import extract_docx_content
 from agents.job_analyzer import analyze_job_description
 from agents.cv_tailor import tailor_cv
+from agents.career_advisor import discover_career_opportunities
 from renderers.inplace_replacer import apply_inplace_replacements
 from renderers.jinja_replacer import render_jinja_template
 from renderers.pdf_exporter import convert_docx_to_pdf
@@ -132,6 +133,51 @@ def run_pipeline(
     console.print("\n[bold green]✅ Processo completato con successo![/bold green]\n")
 
 
+def run_career_discovery(cv_path: str, github_username: str = "gabrielex99", model: str = None):
+    console.print(Panel.fit("[bold magenta]CAREER ADVISOR AGENT[/bold magenta] - Scoperta Ruoli & Opportunità di Mercato", border_style="magenta"))
+    
+    if not os.path.isfile(cv_path):
+        console.print(f"[bold red]Errore:[/bold red] File CV non trovato: {cv_path}")
+        sys.exit(1)
+
+    with console.status(f"[bold magenta]Analisi CV & Scansione GitHub (@{github_username})...[/bold magenta]"):
+        cv_data = extract_docx_content(cv_path)
+        discovery = discover_career_opportunities(
+            cv_text=cv_data["full_text"],
+            github_username=github_username,
+            model=model
+        )
+
+    console.print(Panel(
+        f"[bold]Sintesi Strategica:[/bold]\n{discovery.candidate_summary}\n\n"
+        f"[bold]Competenze Chiave Identificate:[/bold] {', '.join(discovery.extracted_competencies)}",
+        title="🧭 Profilo Professionale & Potenziale",
+        border_style="cyan"
+    ))
+
+    table = Table(title=f"🎯 Ruoli Ideali Consigliati per @{github_username} (Fit CV + Progetti GitHub)")
+    table.add_column("Ruolo Target", style="cyan", no_wrap=True)
+    table.add_column("Categoria", style="yellow")
+    table.add_column("Fit %", style="green", justify="center")
+    table.add_column("Sbloccato da GitHub", style="magenta")
+    table.add_column("Perché Sei Qualificato", style="white")
+    table.add_column("Query Suggerita LinkedIn", style="blue")
+
+    for opp in discovery.opportunities:
+        table.add_row(
+            opp.role_title,
+            opp.category,
+            f"{opp.match_score}%",
+            ", ".join(opp.unlocked_by_github) if opp.unlocked_by_github else "-",
+            opp.why_you_fit[:120] + "...",
+            opp.search_query_suggested
+        )
+
+    console.print(table)
+    console.print("\n[bold green]💡 Suggerimento:[/bold green] Per adattare il CV a uno di questi ruoli, esegui:")
+    console.print("[bold cyan]python main.py --jd \"<titolo o descrizione del ruolo>\"[/bold cyan]\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description="CV Offer Agent - Adatta il tuo CV mantenendo la grafica intatta.")
     parser.add_argument("--cv", type=str, default="templates/master_cv.docx", help="Percorso del file master .docx")
@@ -141,6 +187,7 @@ def main():
     parser.add_argument("--output", type=str, help="Percorso del file DOCX generato")
     parser.add_argument("--model", type=str, help="Modello LLM (es. gpt-4o, gemini/gemini-1.5-pro)")
     parser.add_argument("--github", type=str, default="gabrielex99", help="Username GitHub per estrarre e integrare progetti AI/Tech")
+    parser.add_argument("--discover", action="store_true", help="Scopri ruoli e opportunità nascoste basate su CV e GitHub")
     parser.add_argument("--ui", action="store_true", help="Avvia l'interfaccia grafica Web")
 
     args = parser.parse_args()
@@ -151,10 +198,19 @@ def main():
         subprocess.run([sys.executable, "run_app.py"])
         return
 
+    if args.discover:
+        run_career_discovery(
+            cv_path=args.cv,
+            github_username=args.github,
+            model=args.model
+        )
+        return
+
     if not args.jd:
-        # Se non è specificata JD né UI, suggerisci l'uso
-        console.print("[yellow]Nessuna Job Description passata via --jd. Usa --ui per aprire la Web App o specifica --jd.[/yellow]")
-        console.print("Esempio di test rapido: [bold]python main.py --jd 'templates/sample_job.txt' --pdf[/bold]")
+        # Se non è specificata JD né UI né discover, suggerisci l'uso
+        console.print("[yellow]Nessuna opzione specificata. Usa --ui per la Web App, --discover per scoprire ruoli, o --jd per adattare il CV.[/yellow]")
+        console.print("Esempio Career Advisor: [bold]python main.py --discover[/bold]")
+        console.print("Esempio Adattamento CV: [bold]python main.py --jd 'templates/sample_job.txt' --pdf[/bold]")
         return
 
     run_pipeline(

@@ -63,3 +63,22 @@ class TailoredCVData(BaseModel):
         default_factory=list,
         description="Consigli o note per il candidato su eventuali punti scoperti o da chiarire a colloquio"
     )
+
+
+class CareerOpportunity(BaseModel):
+    """Ruolo o posizione suggerita dall'AI incrociando CV e progetti GitHub."""
+    role_title: str = Field(..., description="Titolo della posizione lavorativa consigliata")
+    category: str = Field(..., description="Settore / Categoria (es. AI & Machine Learning, Cloud & Infrastructure, Security, Architecture)")
+    match_score: int = Field(..., description="Stima di affinità percentuale (0-100)")
+    why_you_fit: str = Field(..., description="Spiegazione di perché il candidato è perfetto per questo ruolo")
+    unlocked_by_github: List[str] = Field(default_factory=list, description="Progetti GitHub che sbloccano o avvalorano questo ruolo")
+    top_skills: List[str] = Field(default_factory=list, description="Competenze chiave richieste dal mercato per questa posizione")
+    search_query_suggested: str = Field(..., description="Query di ricerca consigliata per LinkedIn / Indeed")
+    sample_jd: str = Field(..., description="Esempio di Job Description per adattare subito il CV")
+
+
+class CareerDiscoveryResult(BaseModel):
+    """Risultato globale dell'analisi di orientamento professionale dell'Agent."""
+    candidate_summary: str = Field(..., description="Sintesi del potenziale professionale complessivo del candidato")
+    extracted_competencies: List[str] = Field(default_factory=list, description="Tutte le competenze estratte dall'unione di CV e GitHub")
+    opportunities: List[CareerOpportunity] = Field(default_factory=list, description="Lista dei ruoli consigliati ordinati per match score")

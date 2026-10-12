@@ -17,6 +17,9 @@ output/*.docx
 output/*.pdf
 !output/.gitkeep
 
+# Uploaded CV files
+templates/*_*
+
 # Frontend Node
 frontend/node_modules/
 frontend/.npm/
