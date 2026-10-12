@@ -1,0 +1,27 @@
+Titolo: Supporto Infrastruttura di Terra NATO AGS (Electronics Division)
+Azienda: Leonardo S.p.A.
+Sede: Catania / Base Militare di Sigonella (Ibrida / Presenza)
+
+Descrizione:
+Leonardo svolge un ruolo chiave nel programma NATO AGS (Alliance Ground Surveillance), un sistema completo che comprende elementi aerei, terrestri, operazioni di missione e di supporto ed esegue una sorveglianza terrestre e marittima persistente in qualsiasi condizione atmosferica su vasta area in "near real-time".
+All'interno della Electronics Division stiamo cercando una figura per la sede di Catania con attività presso la Base Militare di Sigonella.
+
+Responsabilità Principali:
+- Configurazione, gestione e manutenzione di reti informatiche complesse (Networking & Sicurezza).
+- Amministrazione dei sistemi operativi Windows e Linux.
+- Conoscenza e gestione di servizi come LDAP, PostgreSQL, VMware, Docker e Zabbix.
+- Sviluppo e implementazione di script in Python, Bash, Go per automatizzare processi e migliorare l'efficienza operativa.
+- Partecipazione alla risoluzione dei problemi e implementazione di soluzioni tecniche ad alta affidabilità.
+- Collaborazione con il team per garantire la sicurezza e la conformità delle infrastrutture.
+- Partecipazione a riunioni con il cliente per comprendere requisiti e fornire approfondimenti tecnici.
+
+Requisiti & Titoli:
+- Laurea in discipline STEM (Ingegneria Informatica o affini).
+- Seniority: Junior (1-3 anni) / Mid.
+- Conoscenze avanzate in networking (Cisco, routing, switching) e sicurezza informatica.
+- Competenza in linguaggi di scripting come Python, Bash, Go.
+- Esperienza nella gestione di sistemi operativi Windows e Linux.
+- Conoscenza o esperienza in LDAP, PostgreSQL, VMware, Docker e Zabbix (o Grafana).
+- Idoneità al conseguimento del Nulla Osta di Segretezza (NOS).
+- Buona conoscenza della lingua inglese (B2 tecnico/professionale).
+- Disponibilità a turni operativi e flessibilità.

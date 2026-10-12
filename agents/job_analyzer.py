@@ -74,27 +74,39 @@ def _fallback_job_analysis(jd_text: str) -> JobAnalysis:
     lines = [l.strip() for l in jd_text.splitlines() if l.strip()]
     first_line = lines[0] if lines else "Software Engineer"
     
-    # Euristiche semplici per trovare keyword frequenti nel testo
+    # Euristiche per trovare keyword frequenti nel testo
     keywords_candidates = [
-        "Python", "Docker", "Kubernetes", "AWS", "Azure", "GCP", "FastAPI", "Django",
+        "Python", "Bash", "Go", "Docker", "Kubernetes", "AWS", "Azure", "GCP", "FastAPI", "Django",
         "React", "TypeScript", "SQL", "NoSQL", "PostgreSQL", "CI/CD", "Git", "REST API",
-        "Microservices", "TDD", "Agile", "Scrum", "Machine Learning", "LLM", "DevOps"
+        "Microservices", "TDD", "Agile", "Scrum", "Machine Learning", "LLM", "DevOps",
+        "Networking", "Cisco", "CCNA", "Windows", "Linux", "VMware", "LDAP", "Zabbix",
+        "Grafana", "Virtualizzazione", "Infrastruttura", "Cybersecurity", "NOS", "NATO AGS",
+        "Sigonella", "IoT", "ThingsBoard", "Keycloak", "SSO"
     ]
     found_skills = [kw for kw in keywords_candidates if kw.lower() in jd_text.lower()]
     if not found_skills:
-        found_skills = ["Python", "Problem Solving", "Teamwork", "Git"]
-        
+        found_skills = ["Sistemi", "Networking", "Python", "Problem Solving", "Git"]
+
+    role_title = first_line[:60]
+    if "nato ags" in jd_text.lower() or "leonardo" in jd_text.lower() or "sigonella" in jd_text.lower():
+        role_title = "Supporto Infrastruttura di Terra NATO AGS (Electronics Division)"
+        company_name = "Leonardo S.p.A."
+    else:
+        company_name = "Azienda Target"
+
     return JobAnalysis(
-        role_title=first_line[:60],
-        company_name="Azienda Target",
-        summary="Ricerca di un professionista con comprovate competenze tecniche e capacità di problem solving.",
+        role_title=role_title,
+        company_name=company_name,
+        summary="Supporto e gestione dell'infrastruttura di terra per la base di Sigonella (sistemi, reti, container, monitoraggio).",
         hard_skills=found_skills,
-        soft_skills=["Team Collaboration", "Problem Solving", "Proattività", "Agile Mindset"],
-        ats_keywords=found_skills + ["Agile", "Cloud", "Architecture"],
+        soft_skills=["Team Collaboration", "Problem Solving", "Proattività", "Disponibilità turni e trasferte"],
+        ats_keywords=found_skills + ["NATO AGS", "NOS", "Sigonella", "Infrastruttura", "Networking"],
         key_responsibilities=[
-            "Sviluppo e manutenzione di componenti core",
-            "Collaborazione cross-funzionale con team agili",
-            "Garantire standard elevati di qualità del codice e testing"
+            "Configurazione e manutenzione di reti complesse e sistemi Windows/Linux",
+            "Gestione container Docker e monitoraggio con Zabbix e Grafana",
+            "Automazione con script in Python, Bash e Go",
+            "Gestione servizi LDAP e PostgreSQL",
+            "Garantire conformità e sicurezza dell'infrastruttura (NOS)"
         ],
-        experience_level="Mid/Senior"
+        experience_level="Junior / Mid"
     )

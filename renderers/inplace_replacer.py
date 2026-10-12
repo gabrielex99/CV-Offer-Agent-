@@ -25,6 +25,20 @@ def replace_in_paragraph(paragraph, target: str, replacement: str) -> bool:
         paragraph.text = new_full_text
         return True
 
+    # Se il paragrafo originale ha un'etichetta in grassetto (es. "Backend:") e il replacement ha formato "Nuova Etichetta: Dettagli"
+    if ":" in new_full_text and len(paragraph.runs) >= 2 and paragraph.runs[0].bold:
+        parts = new_full_text.split(":", 1)
+        label_part = parts[0] + ":"
+        content_part = parts[1]
+        
+        # Preserva run[0] per l'etichetta
+        paragraph.runs[0].text = label_part
+        # Preserva run[1] per il contenuto
+        paragraph.runs[1].text = content_part
+        for r in paragraph.runs[2:]:
+            r.text = ""
+        return True
+
     # Salva le proprietà del primo run
     first_run = paragraph.runs[0]
     font_name = first_run.font.name
